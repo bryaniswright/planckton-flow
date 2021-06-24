@@ -33,6 +33,7 @@ parameters = OrderedDict({
         #["EH-IDTBR-gaff"],
         #["TruxTP6FITIC-gaff"],
         #["TruxTPITIC-gaff"],
+        #["ICBA"],
         ],
 
     # If a mixture is used, the number of each compound in the mixture
