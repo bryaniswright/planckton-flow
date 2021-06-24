@@ -23,8 +23,9 @@ parameters = OrderedDict({
     "input": [
         #["CZTPTZ8FITIC-gaff"],
         #["CZTPTZITIC-gaff"],
-        ["PCBM-gaff"],
-        #["P3HT-16-gaff"],
+        #["PCBM-gaff"],
+        #["P3HT-16-gaff"]i,
+        ["ICBA.mol2"],
         #["ITIC-gaff"],
         #["ITIC-Th-gaff"],
         #["IEICO-gaff"],
@@ -37,22 +38,22 @@ parameters = OrderedDict({
     # If a mixture is used, the number of each compound in the mixture
     # needs to be specified:
     # "n_compounds" = [(100,100), (1000,500)]
-    "n_compounds": [100],
+    "n_compounds": [(200)],
 
     # Density must be specified as a pair containing (value, unit)
-    "density": [(1.0, "g/cm**3")],
+    "density": [(.7, "g/cm**3")],
     # Energy scaling "solvent" parameter
     "e_factor": [1.0],
 
     # Force fields are specified as keys to the FORCEFIELD dictionary in
     # planckton/forcefields/__init__.py
     "forcefield": [
-        "gaff-custom",
-        #"gaff",
+        #"gaff-custom",
+        "gaff",
         ],
 
     # Reduced temperatures specified in simulation units
-    "kT_reduced": [1.0],
+    "kT_reduced": [.3, .5, .75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5],
 
     # Simulation parameters
     # Thermostat coupling
@@ -60,7 +61,7 @@ parameters = OrderedDict({
     # Number of steps to shrink the box
     "shrink_steps": [1e3],
     # Number of steps to run final simulation
-    "n_steps": [1e7],
+    "n_steps": [5e7],
     # Timestep size
     "dt": [0.0001],
     # Whether to remove hydrogen atoms
