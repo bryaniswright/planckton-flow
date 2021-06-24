@@ -11,7 +11,6 @@ from flow.environment import DefaultSlurmEnvironment
 from flow.environments.xsede import Bridges2Environment, CometEnvironment
 from os import path
 
-
 class MyProject(FlowProject):
     pass
 
@@ -113,6 +112,22 @@ def on_container(func):
                 executable='singularity exec --nv $PLANCKTON_SIMG python'
                 )(func)
 
+
+
+@MyProject.label
+def rdfed(job):
+    return job.isfile("rdf.txt")
+
+
+def on_pflow(func):
+    import socket
+    hostname = socket.gethostname()
+    if hostname == "fry.boisestate.edu":
+        return flow.directives(
+            executable='$HOME/miniconda3/envs/planckton-flow/bin/python')(func)
+    elif hostname.endswith(".bridges2.psc.edu"):
+        return flow.directives(
+            executable='$HOME/.conda/envs/planckton-flow/bin/python')(func)
 
 @on_container
 @directives(ngpu=1)
@@ -217,6 +232,52 @@ def get_tps_time(outfiles):
     ss = total_time % 60
     return tps, f"{hh:02d}:{mm:02d}:{ss:02d}"
 
+
+@directives(ngpu=1)
+@on_pflow
+@MyProject.operation
+@MyProject.post(rdfed)
+@MyProject.pre(sampled)
+def post_proc(job):
+    import cmeutils
+    from cmeutils.structure import gsd_rdf
+    from cmeutils.structure import get_quaternions
+    import numpy as np
+    import os
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import gsd
+    import gsd.hoomd
+    import freud
+
+    gsdfile= job.fn('trajectory.gsd')
+    rdf,norm = gsd_rdf(gsdfile,A_name='c', B_name='c', r_min=0.01, r_max=6)
+    x = rdf.bin_centers
+    y = rdf.rdf*norm
+    save_path= os.path.join(job.ws,"rdf.txt")
+    np.savetxt(save_path, np.transpose([x,y]), delimiter=',', header= "bin_centers, rdf")
+    plt.xlabel("r (A.U.)", fontsize=14)
+    plt.ylabel("g(r)", fontsize=14)
+    plt.plot(x, y)
+    save_plot= os.path.join(job.ws,"rdf.png")
+    plt.savefig(save_plot) 
+    with gsd.hoomd.open(gsdfile) as f:
+        snap = f[-1]
+        points = snap.particles.position
+        box = freud.Box.from_box(snap.configuration.box)
+        dp = freud.diffraction.DiffractionPattern(grid_size=1024, output_size=1024)
+        q_list= []
+        os.mkdir(os.path.join(job.ws,"diffraction_plots"))
+    for q in cmeutils.structure.get_quaternions():
+        plt.savefig(os.path.join(job.ws,"diffraction_plots/%s.png" % (q)))
+        q_list.append(q)
+        fig, ax = plt.subplots(figsize=(5, 5), dpi=150)
+        qx,qy,qz,qw = q
+        dp.compute((box, points), view_orientation=q)
+        dp.plot(ax=ax)
+        ax.set_title(f"Diffraction Pattern\nq=[{qx:.2f} {qy:.2f} {qz:.2f} {qw:.2f}]")
+    dp_path=os.path.join(job.ws,"dp.npy")
+    np.save(dp_path, q_list)
 
 
 if __name__ == "__main__":

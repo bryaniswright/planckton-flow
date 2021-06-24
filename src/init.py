@@ -26,6 +26,7 @@ parameters = OrderedDict({
         #["PCBM-gaff"],
         ["PC71BM.mol2"],
         #["P3HT-16-gaff"],
+        #["ICBA.mol2"],
         #["ITIC-gaff"],
         #["ITIC-Th-gaff"],
         #["IEICO-gaff"],
